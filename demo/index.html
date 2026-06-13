@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Recency-Reducibility Gate — live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink:   #0b110e;
+    --ink2:  #111a15;
+    --ink3:  #18241d;
+    --line:  rgba(122,168,142,.16);
+    --line2: rgba(122,168,142,.28);
+    --cream: #edf2ea;
+    --dim:   #93a399;
+    --faint: #5d6d64;
+    --green: #5fd08a;
+    --green-d:#2f8d5b;
+    --amber: #f5b13d;
+    --amber-d:#a8741a;
+    --coral: #ff6f61;
+    --blue:  #74b6cc;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+    --disp: "Fraunces", Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--ink); color: var(--cream); }
+  body {
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(122,168,142,.055) 1px, transparent 0);
+    background-size: 22px 22px;
+    min-height: 100vh;
+  }
+  a { color: var(--blue); }
+
+  header {
+    padding: 26px 30px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 26px;
+    background: linear-gradient(180deg, rgba(24,36,29,.5), transparent);
+  }
+  .brand { display:flex; flex-direction:column; gap:3px; }
+  .eyebrow {
+    font-size: 10.5px; letter-spacing: .34em; text-transform: uppercase;
+    color: var(--green); font-weight: 700;
+  }
+  h1 {
+    font-family: var(--disp); font-weight: 600; font-size: clamp(26px, 3.4vw, 40px);
+    line-height: .98; margin: 0; letter-spacing: -.01em; color: var(--cream);
+    font-variation-settings: "opsz" 80;
+  }
+  h1 em { font-style: italic; color: var(--amber); font-weight: 500; }
+  .lede { max-width: 56ch; color: var(--dim); font-size: 12px; margin-left: auto; }
+  .lede b { color: var(--cream); font-weight: 500; }
+
+  main {
+    display: grid;
+    grid-template-columns: 312px minmax(0,1fr) 340px;
+    gap: 1px;
+    background: var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  @media (max-width: 1180px) { main { grid-template-columns: 1fr; } }
+  .col { background: var(--ink); padding: 20px; min-width: 0;
+    animation: rise .6s cubic-bezier(.2,.7,.2,1) both; }
+  .col.center { animation-delay: .07s; }
+  .col.right  { animation-delay: .14s; }
+  @keyframes rise { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform:none; } }
+
+  .kicker {
+    font-size: 10px; letter-spacing: .26em; text-transform: uppercase;
+    color: var(--faint); margin: 0 0 14px; font-weight: 700;
+    display:flex; align-items:center; gap:10px;
+  }
+  .kicker::after { content:""; flex:1; height:1px; background: var(--line); }
+
+  /* tabs */
+  .tabs { display:flex; gap:6px; margin-bottom: 16px; }
+  .tab {
+    flex:1; padding: 8px 6px; text-align:center; cursor:pointer;
+    background: var(--ink2); border:1px solid var(--line); color: var(--dim);
+    font-family: var(--mono); font-size: 11px; letter-spacing:.04em;
+    border-radius: 7px; transition: .18s;
+  }
+  .tab.active { background: var(--ink3); color: var(--cream); border-color: var(--line2); box-shadow: inset 0 0 0 1px rgba(95,208,138,.18); }
+  .tab:hover:not(.active) { color: var(--cream); }
+
+  .scen-grid { display:grid; grid-template-columns: 1fr 1fr; gap:7px; margin-bottom: 18px; }
+  .sbtn {
+    text-align:left; cursor:pointer; padding:9px 10px; border-radius:8px;
+    background: var(--ink2); border:1px solid var(--line); color: var(--cream);
+    font-family: var(--mono); font-size: 11px; line-height:1.25; transition:.16s;
+    position:relative; overflow:hidden;
+  }
+  .sbtn small { display:block; color: var(--faint); font-size: 9.5px; margin-top:3px; letter-spacing:.02em; }
+  .sbtn:hover { border-color: var(--line2); transform: translateY(-1px); }
+  .sbtn.active { background: var(--ink3); border-color: var(--green-d); box-shadow: inset 0 0 0 1px rgba(95,208,138,.3); }
+  .sbtn.active::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background: var(--green); }
+  .sbtn.foil.active { border-color: var(--amber-d); box-shadow: inset 0 0 0 1px rgba(245,177,61,.3); }
+  .sbtn.foil.active::before { background: var(--amber); }
+
+  .ctrl { margin-bottom: 14px; }
+  .ctrl.hero {
+    background: linear-gradient(180deg, rgba(245,177,61,.07), rgba(95,208,138,.05));
+    border:1px solid var(--line2); border-radius: 10px; padding: 13px 13px 15px; margin: 2px 0 18px;
+  }
+  .ctrl label { display:flex; justify-content:space-between; align-items:baseline;
+    font-size: 10.5px; letter-spacing:.06em; text-transform:uppercase; color: var(--dim); margin-bottom:7px; }
+  .ctrl .v { color: var(--cream); font-weight:700; letter-spacing:0; text-transform:none; }
+  .ctrl.hero .lbl-main { color: var(--amber); font-weight:700; letter-spacing:.1em; }
+  .hero-ends { display:flex; justify-content:space-between; font-size:9px; color:var(--faint); margin-top:6px; letter-spacing:.04em; }
+  input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:4px;
+    background: var(--ink3); border-radius:3px; outline:none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+    background: var(--cream); border:3px solid var(--ink); box-shadow:0 0 0 1px var(--line2); cursor:pointer; transition:.12s; }
+  input[type=range]::-webkit-slider-thumb:hover { background: var(--green); }
+  .ctrl.hero input[type=range]::-webkit-slider-thumb { background: var(--amber); }
+  input[type=range]::-moz-range-thumb { width:16px;height:16px;border-radius:50%;background:var(--cream);border:3px solid var(--ink);cursor:pointer;}
+
+  .reseed { width:100%; margin-top:4px; padding:9px; cursor:pointer; border-radius:8px;
+    background: var(--ink2); border:1px solid var(--line); color: var(--cream); font-family:var(--mono);
+    font-size:11px; letter-spacing:.1em; text-transform:uppercase; transition:.16s; }
+  .reseed:hover { border-color: var(--green-d); color: var(--green); }
+  .seedtag { float:right; color: var(--faint); letter-spacing:0; text-transform:none;}
+
+  /* your-data tab */
+  .dnote { font-size:11px; color:var(--dim); line-height:1.5; margin-bottom:14px; }
+  .dnote code { color: var(--cream); }
+  .ditem { margin-bottom:14px; }
+  .dlabel { display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+    font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); margin-bottom:6px; }
+  .dlabel span { color:var(--faint); font-size:9px; text-transform:none; letter-spacing:.02em; }
+  .dfile { display:block; width:100%; font-family:var(--mono); font-size:10px; color:var(--dim); margin-bottom:6px; }
+  .dfile::file-selector-button { font-family:var(--mono); font-size:10px; background:var(--ink2); color:var(--cream);
+    border:1px solid var(--line); border-radius:6px; padding:5px 9px; cursor:pointer; margin-right:8px; }
+  .dfile::file-selector-button:hover { border-color:var(--green-d); color:var(--green); }
+  .dta { width:100%; height:62px; resize:vertical; background:var(--ink); color:var(--cream);
+    border:1px solid var(--line); border-radius:8px; padding:8px 9px; font-family:var(--mono); font-size:10px; line-height:1.4; }
+  .dta:focus { outline:none; border-color:var(--line2); }
+  .dstat { font-size:9.5px; margin-top:4px; min-height:12px; }
+  .dstat .ok { color:var(--green); } .dstat .bad { color:var(--coral); }
+  .dselects { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+  .dsel select { width:100%; background:var(--ink2); color:var(--cream); border:1px solid var(--line);
+    border-radius:7px; padding:7px 8px; font-family:var(--mono); font-size:11px; }
+  .dsel select:focus { outline:none; border-color:var(--line2); }
+  .reseed.run { background:linear-gradient(180deg, rgba(95,208,138,.12), rgba(95,208,138,.05));
+    border-color:var(--green-d); color:var(--green); letter-spacing:.12em; }
+  .reseed.run:hover { background:rgba(95,208,138,.16); }
+  /* busy / disabled run-gate states */
+  .reseed:disabled { cursor:progress; opacity:.85; }
+  .reseed.busy { color:var(--amber); border-color:var(--amber-d);
+    background:linear-gradient(180deg, rgba(245,177,61,.14), rgba(245,177,61,.05)); }
+  .reseed.done { color:var(--green); border-color:var(--green-d);
+    background:linear-gradient(180deg, rgba(95,208,138,.2), rgba(95,208,138,.06)); }
+  .spin { display:inline-block; width:11px; height:11px; vertical-align:-1px; margin-right:6px;
+    border:2px solid rgba(245,177,61,.35); border-top-color:var(--amber); border-radius:50%;
+    animation:spin .6s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .derr { margin-top:12px; border-radius:8px; padding:9px 11px; font-size:11px; line-height:1.45;
+    background:rgba(255,111,97,.12); border:1px solid rgba(255,111,97,.4); color:var(--cream); display:none; }
+  .derr.show { display:block; }
+  .derr b { color:var(--coral); }
+  /* unmissable error rendered INTO the results area (center gate panel) */
+  .resulterr { margin-top:10px; border-radius:10px; padding:13px 14px; line-height:1.5;
+    background:rgba(255,111,97,.12); border:1px solid rgba(255,111,97,.45); color:var(--cream); }
+  .resulterr b { display:block; color:var(--coral); font-size:13px; margin-bottom:5px; }
+  .resulterr span { display:block; font-size:11px; color:var(--cream); }
+  .resulterr .hint { color:var(--faint); margin-top:7px; font-size:10px; }
+  /* brief success cue banner above the detectors */
+  .ranok { margin:0 0 12px; border-radius:8px; padding:7px 11px; font-size:11px; color:var(--green);
+    background:rgba(95,208,138,.12); border:1px solid var(--green-d); animation:fadein .25s ease; }
+  .ranok.hidden { display:none; }
+  @keyframes fadein { from { opacity:0; transform:translateY(-3px);} to {opacity:1;transform:none;} }
+  .feat-caption { margin-top:12px; font-size:10.5px; line-height:1.5; color:var(--dim);
+    border-left:2px solid var(--amber-d); padding-left:9px; }
+  .feat-caption b { color:var(--amber); }
+
+  /* center detectors */
+  .detectors { display:grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px){ .detectors { grid-template-columns:1fr; } }
+  .panel { border:1px solid var(--line); border-radius:12px; padding:16px; background:
+    linear-gradient(180deg, var(--ink2), var(--ink)); }
+  .panel.naive { border-color: rgba(255,111,97,.22); }
+  .panel.gate  { border-color: rgba(95,208,138,.24); }
+  .panel h3 { margin:0 0 2px; font-family:var(--disp); font-weight:600; font-size:18px; letter-spacing:-.01em; }
+  .panel .sub { color:var(--faint); font-size:10px; letter-spacing:.04em; margin-bottom:14px; text-transform:uppercase; }
+
+  .badge { display:inline-flex; align-items:center; gap:8px; padding:7px 14px; border-radius:999px;
+    font-weight:700; letter-spacing:.16em; font-size:12px; text-transform:uppercase; }
+  .badge.expanding { background: rgba(95,208,138,.13); color: var(--green); box-shadow: inset 0 0 0 1px rgba(95,208,138,.4); }
+  .badge.sliding   { background: rgba(245,177,61,.14); color: var(--amber); box-shadow: inset 0 0 0 1px rgba(245,177,61,.45); }
+  .badge .dot { width:8px;height:8px;border-radius:50%;background:currentColor; box-shadow:0 0 10px currentColor; }
+  @keyframes pop { 0%{transform:scale(.9);opacity:.4} 60%{transform:scale(1.04)} 100%{transform:none;opacity:1} }
+  .badge.anim { animation: pop .4s cubic-bezier(.2,.8,.2,1); }
+
+  /* naive meter */
+  .meter { margin: 18px 0 12px; }
+  .meter-track { position:relative; height:34px; border-radius:7px; background: var(--ink3);
+    overflow:hidden; border:1px solid var(--line); }
+  .meter-fill { position:absolute; left:0; top:0; bottom:0; background:
+    linear-gradient(90deg, rgba(255,111,97,.35), var(--coral)); transition: width .45s cubic-bezier(.2,.8,.2,1); }
+  .meter-thr { position:absolute; top:-4px; bottom:-4px; width:2px; background: var(--cream); }
+  .meter-thr::after { content:"0.55"; position:absolute; top:-15px; left:50%; transform:translateX(-50%);
+    font-size:9px; color:var(--dim); white-space:nowrap; }
+  .meter-num { position:absolute; right:8px; top:50%; transform:translateY(-50%); font-weight:700; font-size:15px;
+    color:var(--cream); text-shadow:0 1px 3px #000; }
+  .naive-reason { font-size:11.5px; color:var(--cream); margin-top:2px; }
+  .naive-reason b { color: var(--coral); }
+
+  /* gate gauges */
+  .gauges { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin: 6px 0 14px; }
+  .gauge { position:relative; text-align:center; padding-top:4px; }
+  .gauge svg { width:100%; height:auto; display:block; }
+  .g-bg { fill:none; stroke: var(--ink3); stroke-width:11; stroke-linecap:round; }
+  .g-fill { fill:none; stroke-width:11; stroke-linecap:round; transition: stroke-dasharray .5s, stroke .3s; }
+  .g-tick { stroke: var(--cream); stroke-width:2.2; }
+  .g-val { position:absolute; left:0; right:0; top:46px; font-size:19px; font-weight:700; letter-spacing:-.02em; }
+  .g-lab { font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin-top:-2px; }
+  .g-thr { font-size:9px; color: var(--faint); margin-top:1px; }
+  .gauge.pass .g-thr { color: var(--green); }
+
+  .reason {
+    font-family: var(--mono); font-size: 11px; line-height:1.45; color: var(--cream);
+    background: var(--ink); border:1px dashed var(--line2); border-radius:8px; padding:10px 11px; margin-top:4px;
+  }
+  .reason .tag { color: var(--faint); display:block; font-size:9px; letter-spacing:.16em; text-transform:uppercase; margin-bottom:5px; }
+
+  .rawnums { display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; margin-top:13px; font-size:11px; }
+  .rawnums .r { display:flex; justify-content:space-between; border-bottom:1px dotted var(--line); padding:2px 0; }
+  .rawnums .r span:first-child { color: var(--dim); }
+  .rawnums .r span:last-child { color: var(--cream); font-weight:700; }
+
+  /* disagreement callout */
+  .callout { margin-top:16px; border-radius:12px; padding:14px 16px; display:flex; gap:13px; align-items:flex-start;
+    background: linear-gradient(110deg, rgba(255,111,97,.12), rgba(95,208,138,.1));
+    border:1px solid var(--line2); }
+  .callout.hidden { display:none; }
+  .callout .vs { font-family:var(--disp); font-weight:700; font-size:13px; letter-spacing:.1em;
+    color:var(--cream); flex:none; padding-top:1px; }
+  .callout p { margin:0; font-size:11.5px; line-height:1.5; color: var(--cream); }
+  .callout b.coral { color: var(--coral); } .callout b.green { color: var(--green); }
+  /* verbatim decideScheme() reason, set apart from the narrative */
+  .callout .cverb { display:block; margin-top:8px; padding-left:9px; border-left:2px solid var(--line2);
+    color: var(--faint); font-size:10px; line-height:1.45; font-family: var(--mono); }
+
+  /* right per-feature */
+  .frac-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px; }
+  .frac-big { font-family:var(--disp); font-size:34px; font-weight:600; letter-spacing:-.02em; }
+  .frac-big .g { color: var(--green); } .frac-big .t { color: var(--dim); }
+  .frac-cap { font-size:9.5px; color:var(--faint); letter-spacing:.08em; text-transform:uppercase; text-align:right; }
+  .bplist { display:flex; flex-direction:column; gap:9px; max-height: 560px; overflow:auto; padding-right:4px; }
+  .bplist::-webkit-scrollbar { width:7px; } .bplist::-webkit-scrollbar-thumb { background:var(--ink3); border-radius:4px; }
+  .bp { font-size:10.5px; }
+  .bp-h { display:flex; justify-content:space-between; margin-bottom:3px; }
+  .bp-h .fn { color: var(--cream); font-weight:700; }
+  .bp-delta { color: var(--faint); font-variant-numeric: tabular-nums; }
+  .bp-delta.good { color: var(--green); }
+  .bp-bars { position:relative; }
+  .bp-row { display:flex; align-items:center; gap:6px; height:13px; }
+  .bp-tag { width:11px; color:var(--faint); font-size:8.5px; }
+  .bp-track { flex:1; height:7px; background:var(--ink3); border-radius:4px; overflow:hidden; }
+  .bp-bar { height:100%; border-radius:4px; transition: width .45s; }
+  .bp-bar.full { background: var(--blue); opacity:.55; }
+  .bp-bar.recent { background: var(--dim); }
+  .bp-bar.recent.good { background: var(--green); }
+  .emptynote { color:var(--faint); font-size:11px; line-height:1.5; }
+
+  /* bottom OLS */
+  .ols { padding: 22px 30px 30px; background: var(--ink2);
+    background-image: radial-gradient(circle at 1px 1px, rgba(122,168,142,.05) 1px, transparent 0);
+    background-size: 22px 22px; }
+  .ols-inner { display:grid; grid-template-columns: 1fr 1fr 1.4fr; gap:20px; align-items:center; }
+  @media (max-width:880px){ .ols-inner { grid-template-columns:1fr; } }
+  .mae { border:1px solid var(--line); border-radius:12px; padding:15px 17px; background:var(--ink); position:relative; }
+  .mae.win { border-color: var(--green-d); box-shadow: inset 0 0 0 1px rgba(95,208,138,.25); }
+  .mae .mh { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); display:flex; justify-content:space-between; }
+  .mae .mh .chosen { color: var(--amber); font-weight:700; }
+  .mae .mv { font-family:var(--disp); font-size:38px; font-weight:600; letter-spacing:-.02em; margin-top:4px; }
+  .mae .ms { font-size:10px; color:var(--faint); }
+  .ols-verdict { font-size:12.5px; line-height:1.55; }
+  .ols-verdict h4 { font-family:var(--disp); font-weight:600; font-size:16px; margin:0 0 7px; }
+  .ols-verdict .ok { color: var(--green); font-weight:700; }
+  .ols-verdict .caution { color: var(--amber); font-weight:700; }
+
+  footer { padding:16px 30px 40px; color:var(--faint); font-size:10.5px; letter-spacing:.04em; }
+  footer code { color: var(--dim); }
+  .nowrap { white-space:nowrap; }
+
+  /* ── structural toggles (segmented controls) ─────────────────────────────── */
+  .seg { display:flex; gap:5px; }
+  .seg button {
+    flex:1; padding:7px 6px; cursor:pointer; border-radius:7px;
+    background: var(--ink2); border:1px solid var(--line); color: var(--dim);
+    font-family: var(--mono); font-size: 11px; letter-spacing:.02em; transition:.16s;
+  }
+  .seg button:hover:not(.seg-on) { color: var(--cream); border-color: var(--line2); }
+  .seg button.seg-on {
+    background: var(--ink3); color: var(--cream); border-color: var(--green-d);
+    box-shadow: inset 0 0 0 1px rgba(95,208,138,.28);
+  }
+  .ctrl label > span:first-child { display:inline-flex; align-items:center; }
+
+  /* ── preset 3-state + breadcrumb ─────────────────────────────────────────── */
+  .sbtn.exact { background: var(--ink3); border-color: var(--green-d); box-shadow: inset 0 0 0 1px rgba(95,208,138,.3); }
+  .sbtn.exact::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background: var(--green); }
+  .sbtn.foil.exact { border-color: var(--amber-d); box-shadow: inset 0 0 0 1px rgba(245,177,61,.3); }
+  .sbtn.foil.exact::before { background: var(--amber); }
+  .sbtn.modified { border-color: var(--line2); border-style: dashed; }
+  .sbtn.modified::after {
+    content:""; position:absolute; right:7px; top:7px; width:6px; height:6px; border-radius:50%;
+    background: var(--amber); box-shadow:0 0 6px var(--amber);
+  }
+  .breadcrumb {
+    display:flex; align-items:center; gap:8px; margin: 0 0 14px;
+    font-size:10.5px; color: var(--dim); background: var(--ink2);
+    border:1px dashed var(--line2); border-radius:8px; padding:7px 10px;
+  }
+  .breadcrumb b { color: var(--cream); font-weight:600; }
+  .breadcrumb button {
+    margin-left:auto; cursor:pointer; background:transparent; border:1px solid var(--line2);
+    color: var(--green); border-radius:6px; padding:3px 9px; font-family:var(--mono); font-size:10px;
+    letter-spacing:.04em; transition:.16s;
+  }
+  .breadcrumb button:hover { background: rgba(95,208,138,.12); border-color: var(--green-d); }
+
+  /* ── always-present descriptor ───────────────────────────────────────────── */
+  .descriptor {
+    border:1px solid var(--line2); border-radius:10px; padding:11px 13px; margin: 0 0 16px;
+    background: linear-gradient(180deg, rgba(24,36,29,.6), rgba(11,17,14,.4));
+  }
+  .descriptor .d-cell { font-family: var(--disp); font-weight:600; font-size:15px; color: var(--cream); letter-spacing:-.01em; }
+  .descriptor .d-rec { font-size:11px; color: var(--dim); margin-top:4px; line-height:1.5; }
+  .descriptor .d-rec b { color: var(--cream); font-weight:600; }
+  .descriptor .d-rec .live { color: var(--faint); }
+  .descriptor .d-gate { font-size:11.5px; margin-top:7px; padding-top:7px; border-top:1px dotted var(--line);
+    color: var(--cream); display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .descriptor .d-gate .lbl { color: var(--faint); letter-spacing:.1em; text-transform:uppercase; font-size:9px; }
+  .descriptor .d-gate .nums { font-variant-numeric: tabular-nums; }
+  .descriptor .d-gate .arrow { color: var(--faint); }
+  .descriptor .d-gate .sch { font-weight:700; letter-spacing:.12em; }
+  .descriptor .d-gate .sch.sliding { color: var(--amber); }
+  .descriptor .d-gate .sch.expanding { color: var(--green); }
+
+  /* ── seasonal-only foil note ─────────────────────────────────────────────── */
+  .foilnote {
+    margin-top:14px; border-radius:10px; padding:11px 14px; display:flex; gap:11px; align-items:flex-start;
+    background: linear-gradient(110deg, rgba(245,177,61,.12), rgba(116,182,204,.08));
+    border:1px solid var(--amber-d); font-size:11.5px; line-height:1.5; color: var(--cream);
+  }
+  .foilnote.hidden { display:none; }
+  .foilnote .ic { color: var(--amber); font-weight:700; flex:none; }
+
+  /* ── info (ⓘ) affordance + tooltip ───────────────────────────────────────── */
+  .info {
+    position:relative; display:inline-flex; align-items:center; justify-content:center;
+    width:14px; height:14px; margin-left:6px; border-radius:50%; flex:none;
+    border:1px solid var(--line2); color: var(--dim); font-size:9px; font-weight:700;
+    font-style:normal; line-height:1; cursor:help; vertical-align:middle; user-select:none;
+    letter-spacing:0; text-transform:none;
+  }
+  .info:hover, .info:focus { color: var(--green); border-color: var(--green-d); outline:none; }
+  .info:focus-visible { box-shadow: 0 0 0 2px rgba(95,208,138,.5); }
+  /* The tooltip is hidden at rest (a child of its ⓘ, so aria-describedby + the
+     COPY byte-compare still resolve it). On show, tooltip.js relocates it into a
+     document.body escape layer as position:fixed and sets left/top via FLIP+CLAMP
+     so it is clipped only by the viewport — never by a panel's overflow or a
+     transformed ancestor. NOTE: target .tip (not .info .tip) so the styling still
+     applies once the node has been moved out to the body escape layer. */
+  .tip {
+    display:none; position:fixed; z-index:9999; left:0; top:0; width:250px; max-width:72vw;
+    padding:10px 12px; background:#070b09; border:1px solid var(--line2); border-radius:9px;
+    color: var(--cream); font-size:10.5px; line-height:1.55; font-weight:400; font-style:normal;
+    letter-spacing:0; text-transform:none; text-align:left; box-shadow:0 10px 30px rgba(0,0,0,.6);
+    pointer-events:none; white-space:normal;
+  }
+  .tip.tip-show { display:block; }
+  /* caret points back to the ⓘ; --caret-left is set per-show, side class flips it */
+  .tip::after {
+    content:""; position:absolute; left: var(--caret-left, 50%); transform: translateX(-50%);
+    border:6px solid transparent;
+  }
+  .tip.tip-above::after { top:100%; border-top-color: var(--line2); }
+  .tip.tip-below::after { bottom:100%; border-bottom-color: var(--line2); }
+  .tab .info { border-color: rgba(122,168,142,.4); }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span class="eyebrow">recency_cv · live diagnostic</span>
+    <h1>The recency-reducibility <em>gate</em></h1>
+  </div>
+  <p class="lede">Two detectors read the <b>same generated data</b>. The naive separability test asks
+  “are train and val different?” — which a forecast holdout answers <b>yes</b> by construction. The gate asks the
+  only question sliding can act on: <b>does the recent block actually move closer to val?</b> Every verdict below is
+  computed live by <code>gate.js</code>.</p>
+</header>
+
+<main>
+  <!-- LEFT -->
+  <section class="col left">
+    <div class="tabs">
+      <div class="tab active" data-tab="scenario" id="tabScenario">Scenarios<span data-info="tabScenarios"></span></div>
+      <div class="tab" data-tab="data" id="tabData">Your data<span data-info="tabData"></span></div>
+    </div>
+
+    <div id="panelScenario">
+      <div class="scen-grid" id="scenGrid"></div>
+      <div class="breadcrumb" id="breadcrumb" style="display:none"></div>
+
+      <div class="ctrl">
+        <label><span>Drift shape <span data-info="shape"></span></span></label>
+        <div class="seg" id="shapeToggle">
+          <button type="button" data-shape="step" class="seg-on">step</button>
+          <button type="button" data-shape="ramp">ramp</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label><span>Drift target <span data-info="target"></span></span></label>
+        <div class="seg" id="targetToggle">
+          <button type="button" data-target="covariates" class="seg-on">covariates</button>
+          <button type="button" data-target="seasonal-only">seasonal-only</button>
+        </div>
+      </div>
+
+      <div class="ctrl hero">
+        <label class="lbl-main"><span>Changepoint position <span data-info="changepoint"></span></span><span class="v" id="pVal">0.00</span></label>
+        <input type="range" id="pSlide" min="0" max="1" step="0.01" value="0" />
+        <div class="hero-ends"><span>◀ inside recent window → SLIDING</span><span>at boundary → EXPANDING ▶</span></div>
+      </div>
+
+      <div class="ctrl">
+        <label><span>Drift magnitude <span data-info="magnitude"></span></span><span class="v" id="magVal">2.0</span></label>
+        <input type="range" id="magSlide" min="0" max="3" step="0.1" value="2" />
+      </div>
+      <div class="ctrl">
+        <label><span>Recent-window size <span data-info="recentwindow"></span></span><span class="v" id="rpVal">14</span></label>
+        <input type="range" id="rpSlide" min="5" max="20" step="1" value="14" />
+      </div>
+      <div class="ctrl">
+        <label><span>Feature count <span data-info="features"></span></span><span class="v" id="nfVal">15</span></label>
+        <input type="range" id="nfSlide" min="6" max="20" step="1" value="15" />
+      </div>
+      <div class="ctrl">
+        <label><span>Periods <span data-info="periods"></span></span><span class="v" id="npVal">30</span></label>
+        <input type="range" id="npSlide" min="16" max="40" step="1" value="30" />
+      </div>
+      <button class="reseed" id="reseedBtn">↻ Reseed <span class="seedtag" id="seedTag">seed 1</span></button>
+    </div>
+
+    <div id="panelData" style="display:none">
+      <div class="dnote">Run the real <code>gate.js</code> on your own CSVs — parsed and decided
+        entirely in your browser, nothing uploaded. The verdict is whatever <code>driftDiagnostic</code> +
+        <code>decideScheme</code> return on your rows.</div>
+
+      <button class="reseed" id="loadExample" style="margin-bottom:16px">⤓ Load bundled example</button>
+
+      <div class="ditem">
+        <label class="dlabel">Training data <span>with target</span></label>
+        <input type="file" id="trainFile" accept=".csv,text/csv,text/plain" class="dfile" />
+        <textarea id="trainText" class="dta" placeholder="period,feat_a,feat_b,target&#10;0,0.4,-1.2,3.1&#10;0,…" spellcheck="false"></textarea>
+        <div class="dstat" id="trainStat"></div>
+      </div>
+
+      <div class="ditem">
+        <label class="dlabel">Validation / test data <span>covariates; target optional</span></label>
+        <input type="file" id="valFile" accept=".csv,text/csv,text/plain" class="dfile" />
+        <textarea id="valText" class="dta" placeholder="period,feat_a,feat_b&#10;40,2.7,1.0&#10;40,…" spellcheck="false"></textarea>
+        <div class="dstat" id="valStat"></div>
+      </div>
+
+      <div class="dselects">
+        <div class="dsel">
+          <label class="dlabel">Time / period column <span>required</span></label>
+          <select id="timeSel"></select>
+        </div>
+        <div class="dsel">
+          <label class="dlabel">Target column <span>optional</span></label>
+          <select id="targetSel"></select>
+        </div>
+      </div>
+
+      <button class="reseed run" id="runGate">▶ Run gate</button>
+      <div class="derr" id="dataErr"></div>
+    </div>
+  </section>
+
+  <!-- CENTER -->
+  <section class="col center">
+    <div class="ranok hidden" id="ranOk"></div>
+    <div class="descriptor" id="descriptor" style="display:none"></div>
+    <p class="kicker">Two detectors · one dataset</p>
+    <div class="detectors">
+      <div class="panel naive" id="naivePanel"></div>
+      <div class="panel gate" id="gatePanel"></div>
+    </div>
+    <div class="callout hidden" id="callout">
+      <span class="vs">NAIVE&nbsp;✗</span>
+      <p id="calloutText"></p>
+    </div>
+    <div class="foilnote hidden" id="foilNote">
+      <span class="ic">⌖</span>
+      <p style="margin:0">Drift is in excluded columns → the naive test reacts, the gate ignores it.</p>
+    </div>
+  </section>
+
+  <!-- RIGHT -->
+  <section class="col right">
+    <p class="kicker">Per-feature scan<span data-info="perfeature"></span></p>
+    <div id="featurePanel"></div>
+  </section>
+</main>
+
+<!-- BOTTOM -->
+<div class="ols">
+  <p class="kicker" style="margin-bottom:16px">Closing the loop · OLS holdout (the gate never reads val's target)<span data-info="ols"></span></p>
+  <div class="ols-inner" id="olsInner"></div>
+</div>
+
+<footer>
+  Deterministic: same seed → same data → same verdict. Built on the real <code>recency_cv</code> port in
+  <code>gate.js</code>; data &amp; baselines in <code>scenarios.js</code>. Gauges, bars and meters are hand-built inline SVG/CSS.
+</footer>
+
+<script type="module">
+import {
+  driftDiagnostic, decideScheme,
+  DRIFT_FRAC_IMPROVED_THRESHOLD as T_FRAC,
+  DRIFT_REL_THRESHOLD as T_REL,
+  MIN_FEATURES_FOR_SLIDING as T_NFEAT,
+  DRIFT_IMPROVE_PER_FEATURE_THRESHOLD as T_IMP,
+  RECENT_PERIODS,
+} from "./gate.js";
+import {
+  generate, SCENARIO_PRESETS, SCENARIO_PRESET_INFO, SCENARIO_PRESET_ORDER,
+  PRESET_KEYS, presetMatches, recognize,
+  naiveFoil, naiveCols, olsHoldout, NAIVE_THRESHOLD,
+} from "./scenarios.js";
+import {
+  parseCSV, isNumericCol, numericColsInBoth,
+  guessTimeCol, guessTargetCol, buildValTarget,
+} from "./dataio.js";
+import { disagreementCallout } from "./callout.js";
+import {
+  sampleGroups, ROW_CAP, SAMPLE_SEED,
+} from "./sampling.js";
+import { initTooltips } from "./tooltip.js";
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+const fmt = (x, d = 2) => (x == null || Number.isNaN(x) ? "—" : Number(x).toFixed(d));
+
+// ── verbatim tooltip copy (single source of truth) ──────────────────────────
+const COPY = {
+  naive: "The standard approach the gate argues against: train a classifier to tell training rows from validation rows; high separability is read as 'big shift → slide.' On a forecasting holdout this saturates — validation is always the future, so separability is high whether or not recency would actually help.",
+  frac: "Breadth. The share of features that move closer to validation when training is restricted to the recent window (per-feature improvement > 0.05). Primary gate, because a vote across features is robust — a few odd features can't swing it. Sliding needs ≥ 0.60.",
+  rel: "Depth. The average fractional reduction in distance-to-validation from the recent window (mean improvement ÷ mean full-train distance). Secondary, because it's mean-driven and fragile — a couple of high-variance features can flip its sign. Sliding needs ≥ 0.25.",
+  n: "Evidence breadth. How many numeric features the diagnostic could scan. Below 12 the frac vote is too thin to trust, so the gate falls back to expanding regardless. An independent second brake.",
+  verdict: "The CV scheme chosen, with the verbatim reason. Expanding (all history) is the default; sliding (recent window only) is taken only when all three gates clear — breadth, depth, and enough features.",
+  perfeature: "The evidence behind frac. Per feature: standardized distance to validation from the full training set (left) vs the recent window (right). Green when recent narrows the gap by > 0.05 — those count toward frac. Computed before any scheme is chosen: an input to the decision, not a result of it.",
+  ols: "The answer key. Fits a plain model on each window — all history vs recent only — and reports real error on the validation target. It doesn't make the decision; it checks whether the gate's chosen window actually predicts better. The gate never sees the target.",
+  shape: "How the drift arrives. Step = abrupt regime change at the changepoint. Ramp = smooth linear trend — the counterintuitive case the gate correctly ignores, because standardization normalizes a trend so the recent window isn't actually closer to validation.",
+  target: "Which columns carry the drift. Covariates = the real measured features. Seasonal-only = time-index/seasonal-named columns the gate excludes by construction. Set seasonal-only and raise magnitude to see the foil: naive AUC climbs, the gate stays expanding.",
+  magnitude: "Size of the regime shift or trend, in noise-standard-deviation units. Zero = stationary.",
+  changepoint: "Where the shift sits in time, from inside the recent window (left) to the train/validation boundary (right). Slide it and watch the verdict flip: a shift the recent window shares with validation → sliding; a shift at the boundary it can't reach → expanding.",
+  features: "How many covariates the simulated dataset has. Below 12 trips the evidence-breadth floor.",
+  periods: "Periods of training history. Fewer than the recent-window size means no recent block can form and the gate falls back to expanding.",
+  recentwindow: "How many trailing periods the gate treats as 'recent' when comparing the recent block against full history (the algorithm's RECENT_PERIODS).",
+  tabScenarios: "Simulated data. Buttons are presets that set the controls below; toggles and sliders then reshape the data freely and the real gate responds.",
+  tabData: "Your own CSVs, run through the same gate in the browser. Nothing hardcoded.",
+  sampled: "Sampled to keep the demo responsive. Whole time series are kept intact and all periods stay represented, so the verdict tracks the full dataset.",
+};
+
+// Build an accessible ⓘ affordance: shows COPY[key] on hover, keyboard focus,
+// and tap; aria-describedby wires the tooltip text to the trigger for SRs.
+let tipSeq = 0;
+function info(key, edge) {
+  const id = `tip-${key}-${tipSeq++}`;
+  const cls = edge ? ` tip-${edge}` : "";
+  return `<span class="info${cls}" tabindex="0" role="button" aria-label="More info" aria-describedby="${id}"`
+    + ` onclick="event.stopPropagation()">i<span class="tip" role="tooltip" id="${id}">${esc(COPY[key] || "")}</span></span>`;
+}
+// Replace every <span data-info="key"></span> placeholder in static markup.
+function hydrateInfo(root = document) {
+  root.querySelectorAll("[data-info]").forEach((el) => {
+    const edge = el.getAttribute("data-info-edge") || "";
+    el.outerHTML = info(el.dataset.info, edge);
+  });
+}
+
+const state = {
+  tab: "scenario",
+  // structural toggles + continuous sliders (the one parameter space)
+  shape: "step",
+  target: "covariates",
+  magnitude: 2,
+  changepoint: 0,
+  recentWindow: 14,
+  nFeatures: 15,
+  nPeriods: 30,
+  seed: 1,
+  activePreset: "recentRegimeShift", // last preset landed on (for bookmark + breadcrumb)
+  // "Your data" tab
+  dataTrain: null,    // { header, rows } | null
+  dataVal: null,      // { header, rows } | null
+  dataValTruth: null, // rows[] from the bundled example_val_truth.csv | null
+};
+
+// The current slider/toggle config as a preset-comparable object.
+function currentParams() {
+  return {
+    shape: state.shape, target: state.target, magnitude: state.magnitude,
+    changepoint: state.changepoint, nFeatures: state.nFeatures,
+    nPeriods: state.nPeriods, recentWindow: state.recentWindow, seed: state.seed,
+  };
+}
+
+// ── inline SVG: radial gauge ────────────────────────────────────────────────
+function gaugeSVG(value, threshold, domain, label, fmtVal, tipKey) {
+  const [lo, hi] = domain;
+  const cx = 80, cy = 84, R = 64, C = Math.PI * R; // semicircle arc length
+  const clamp = (x) => Math.max(lo, Math.min(hi, x));
+  const fr = (v) => (clamp(v) - lo) / (hi - lo);
+  const ok = value >= threshold;
+  const col = ok ? "var(--green)" : "var(--amber)";
+  const fv = fr(value), ft = fr(threshold);
+  // point on upper semicircle for fraction f (0=left .. 1=right)
+  const pt = (f, r) => {
+    const a = Math.PI * (1 - f);
+    return [cx + r * Math.cos(a), cy - r * Math.sin(a)];
+  };
+  const [tx0, ty0] = pt(ft, R - 9), [tx1, ty1] = pt(ft, R + 9);
+  const dash = `${Math.max(0.0001, fv) * C} ${C}`;
+  return `
+    <svg viewBox="0 0 160 100" role="img" aria-label="${label} ${fmtVal(value)}">
+      <path class="g-bg" d="M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}" />
+      <path class="g-fill" stroke="${col}" stroke-dasharray="${dash}"
+            d="M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}" />
+      <line class="g-tick" x1="${tx0}" y1="${ty0}" x2="${tx1}" y2="${ty1}" />
+    </svg>
+    <div class="g-val" style="color:${col}">${fmtVal(value)}</div>
+    <div class="g-lab">${label}${tipKey ? info(tipKey) : ""}</div>
+    <div class="g-thr">${ok ? "✓ ≥" : "✗ <"} ${threshold}</div>`;
+}
+function gauge(value, threshold, domain, label, fmtVal, tipKey) {
+  return `<div class="gauge ${value >= threshold ? "pass" : "fail"}">${gaugeSVG(value, threshold, domain, label, fmtVal, tipKey)}</div>`;
+}
+
+// ── inline SVG/CSS: per-feature bar pair ────────────────────────────────────
+function barPair(feature, distFull, distRecent, maxV) {
+  const narrows = distRecent < distFull - T_IMP;
+  const w = (v) => `${Math.max(1.5, Math.min(100, (v / maxV) * 100))}%`;
+  const delta = distFull - distRecent;
+  return `<div class="bp">
+    <div class="bp-h">
+      <span class="fn">${esc(feature)}</span>
+      <span class="bp-delta ${narrows ? "good" : ""}">${narrows ? "▼" : "·"} ${delta >= 0 ? "+" : ""}${fmt(delta)}</span>
+    </div>
+    <div class="bp-bars">
+      <div class="bp-row"><span class="bp-tag">F</span><div class="bp-track"><div class="bp-bar full" style="width:${w(distFull)}"></div></div></div>
+      <div class="bp-row"><span class="bp-tag">R</span><div class="bp-track"><div class="bp-bar recent ${narrows ? "good" : ""}" style="width:${w(distRecent)}"></div></div></div>
+    </div>
+  </div>`;
+}
+
+function verdictBadge(scheme, anim) {
+  return `<span class="badge ${scheme} ${anim ? "anim" : ""}"><span class="dot"></span>${scheme}</span>`;
+}
+
+// ── compute + render ────────────────────────────────────────────────────────
+let lastScheme = null;
+let tooltips = null; // tooltip controller (set in init); reposition/cleanup hook
+
+function currentScenario() {
+  return generate(currentParams());
+}
+
+// Short region names for the "Between …" descriptor.
+const SHORT_NAME = {
+  stationary: "stationary", recentRegimeShift: "recent-shift",
+  boundaryShift: "boundary-shift", seasonalOnly: "seasonal-only",
+  linearTrend: "linear-trend", thinEvidence: "thin-evidence",
+};
+
+function renderScenario() {
+  const sc = currentScenario();
+  const diag = driftDiagnostic(sc.trainRows, sc.valRows, sc.timeCol, { recentPeriods: state.recentWindow });
+  const verdict = decideScheme(diag);
+  const naive = naiveFoil(sc.trainRows, sc.valRows, naiveCols(sc));
+  const anim = verdict.scheme !== lastScheme;
+  lastScheme = verdict.scheme;
+
+  paintDetectors(diag, verdict, naive, anim);
+  renderFeatures(diag, sc.timeCol);
+  renderOLS(sc, verdict, state.recentWindow);
+  renderDescriptor(sc, diag, verdict);
+
+  // Seasonal-only foil note: honestly driven — only when the naive baseline says
+  // SLIDING while the gate says EXPANDING in the seasonal-only cell.
+  const foil = state.target === "seasonal-only" && naive.scheme === "sliding" && verdict.scheme === "expanding";
+  document.getElementById("foilNote").classList.toggle("hidden", !foil);
+
+  refreshPresetStates();
+}
+
+// The always-present "what am I looking at" descriptor. Rebuilt from CURRENT
+// state on every change — never anonymous. Line 1 = structural cell (toggles,
+// exact). Line 2 = soft recognition + live slider values. Line 3 = the gate's
+// COMPUTED verdict (the authority), straight from gate.js — shown even when no
+// preset name matches.
+function renderDescriptor(sc, diag, verdict) {
+  const el = document.getElementById("descriptor");
+  el.style.display = "";
+  const p = currentParams();
+
+  // Line 1 — structural cell (sc.label is built verbatim from the toggles).
+  const cell = `<div class="d-cell">${esc(sc.label)}</div>`;
+
+  // Line 2 — soft recognition prefix + live values.
+  const rec = recognize(p);
+  let prefix;
+  if (rec && rec.name) {
+    prefix = `Looks like: <b>${esc(SCENARIO_PRESET_INFO[rec.name].label)}</b> — `;
+  } else if (rec && rec.between) {
+    prefix = `Between <b>${SHORT_NAME[rec.between[0]]}</b> and <b>${SHORT_NAME[rec.between[1]]}</b> — `;
+  } else {
+    prefix = `Off any named preset — `;
+  }
+  const live = `magnitude ${p.magnitude.toFixed(1)} · changepoint ${p.changepoint.toFixed(2)} · `
+    + `${p.nFeatures} features · ${p.nPeriods} periods · recent window ${p.recentWindow}`;
+  const recLine = `<div class="d-rec">${prefix}<span class="live">${live}</span></div>`;
+
+  // Line 3 — the gate's computed verdict (authoritative).
+  let gateLine;
+  if (diag.ok) {
+    gateLine = `<div class="d-gate"><span class="lbl">Gate</span>`
+      + `<span class="nums">frac ${fmt(diag.frac_improved, 2)}, rel ${fmt(diag.rel, 2)}, n ${diag.n_features_scanned}</span>`
+      + `<span class="arrow">→</span><span class="sch ${verdict.scheme}">${verdict.scheme.toUpperCase()}</span>`
+      + info("verdict") + `</div>`;
+  } else {
+    gateLine = `<div class="d-gate"><span class="lbl">Gate</span>`
+      + `<span class="nums">diagnostic fallback (${esc(diag.reason || "could not run")})</span>`
+      + `<span class="arrow">→</span><span class="sch ${verdict.scheme}">${verdict.scheme.toUpperCase()}</span>`
+      + info("verdict") + `</div>`;
+  }
+
+  el.innerHTML = cell + recLine + gateLine;
+}
+
+// Fill the center two detector panels + the disagreement callout. Shared by the
+// Scenarios tab and the "Your data" tab — both feed it a real diag/verdict/naive
+// computed by gate.js + scenarios.js, never anything hardcoded.
+function paintDetectors(diag, verdict, naive, anim) {
+  // NAIVE PANEL
+  const naivePct = Math.max(0, Math.min(1, (naive.meanAuc - 0.5) / 0.5)) * 100;
+  document.getElementById("naivePanel").innerHTML = `
+    <h3>Naive separability${info("naive")}</h3>
+    <div class="sub">adversarial AUC · the standard foil</div>
+    ${verdictBadge(naive.scheme, anim)}
+    <div class="meter">
+      <div class="meter-track">
+        <div class="meter-fill" style="width:${naivePct}%"></div>
+        <div class="meter-thr" style="left:${((NAIVE_THRESHOLD - 0.5) / 0.5) * 100}%"></div>
+        <div class="meter-num">${fmt(naive.meanAuc)}</div>
+      </div>
+    </div>
+    <div class="naive-reason">${naive.reason.replace("SLIDING", "<b>SLIDING</b>")}</div>
+    <div class="rawnums">
+      <div class="r"><span>mean AUC</span><span>${fmt(naive.meanAuc)}</span></div>
+      <div class="r"><span>max AUC</span><span>${fmt(naive.maxAuc)}</span></div>
+      <div class="r"><span>cols scanned</span><span>${naive.per.length}</span></div>
+      <div class="r"><span>threshold</span><span>${NAIVE_THRESHOLD}</span></div>
+    </div>`;
+
+  // GATE PANEL
+  let gaugesHtml, raw;
+  if (diag.ok) {
+    gaugesHtml = `<div class="gauges">
+      ${gauge(diag.frac_improved, T_FRAC, [0, 1], "frac improved", (v) => fmt(v), "frac")}
+      ${gauge(diag.rel, T_REL, [-0.6, 1], "rel", (v) => fmt(v), "rel")}
+      ${gauge(diag.n_features_scanned, T_NFEAT, [0, 24], "n features", (v) => String(v), "n")}
+    </div>`;
+    raw = `<div class="rawnums">
+      <div class="r"><span>mean_dist_full</span><span>${fmt(diag.mean_dist_full)}</span></div>
+      <div class="r"><span>mean_dist_recent</span><span>${fmt(diag.mean_dist_recent)}</span></div>
+      <div class="r"><span>mean_improvement</span><span>${fmt(diag.mean_improvement)}</span></div>
+      <div class="r"><span>n_scanned</span><span>${diag.n_features_scanned}</span></div>
+    </div>`;
+  } else {
+    gaugesHtml = `<p class="emptynote" style="margin:14px 0">Diagnostic could not run on this data — the gate
+      falls back to expanding (never to sliding on missing evidence).</p>`;
+    raw = "";
+  }
+  document.getElementById("gatePanel").innerHTML = `
+    <h3>Recency-reducibility gate${info("verdict")}</h3>
+    <div class="sub">recency_cv · driftDiagnostic → decideScheme</div>
+    ${verdictBadge(verdict.scheme, anim)}
+    ${gaugesHtml}
+    <div class="reason"><span class="tag">verbatim reason from decideScheme()</span>${verdict.reason}</div>
+    ${raw}`;
+
+  // CALLOUT — naive-vs-gate disagreement, composed from the REAL state (both
+  // verdicts, the gate's frac/rel/n, and decideScheme's verbatim reason) by
+  // callout.js. Shown ONLY when the two detectors disagree; hidden when they
+  // agree. Honest for any upload — nothing hardcoded to a scenario.
+  const callout = document.getElementById("callout");
+  const calloutHtml = disagreementCallout(naive, diag, verdict);
+  if (calloutHtml) {
+    callout.classList.remove("hidden");
+    document.getElementById("calloutText").innerHTML = calloutHtml;
+  } else {
+    callout.classList.add("hidden");
+  }
+}
+
+function renderFeatures(diag, timeCol) {
+  const el = document.getElementById("featurePanel");
+  if (!diag.ok || !diag.per_feature || !diag.per_feature.length) {
+    el.innerHTML = `<p class="emptynote">No per-feature scan: the diagnostic did not run on this configuration.</p>`;
+    return;
+  }
+  const pf = diag.per_feature;
+  const maxV = Math.max(...pf.map((f) => Math.max(f.dist_full, f.dist_recent)), 0.1);
+  const improved = pf.filter((f) => f.improvement > T_IMP).length;
+  // Subtlety worth surfacing: if the time index itself got scanned as a feature
+  // (it isn't excluded by name), show whether recency narrowed it. On honest
+  // data it has NEGATIVE improvement — the gate isn't fooled into counting the
+  // monotone period column toward frac_improved.
+  const timeEntry = timeCol ? pf.find((f) => f.feature === timeCol) : null;
+  let caption = "";
+  if (timeEntry && timeEntry.improvement <= T_IMP) {
+    caption = `<p class="feat-caption">The time index <b>${esc(timeCol)}</b> was scanned as a feature
+      (it isn't excluded by name) but its improvement is <b>${fmt(timeEntry.improvement)}</b> — recency does
+      <b>not</b> pull the monotone period column toward val, so it never counts toward frac_improved.
+      The gate isn't fooled by the time index.</p>`;
+  }
+  el.innerHTML = `
+    <div class="frac-head">
+      <div class="frac-big"><span class="g">${improved}</span><span class="t">/${pf.length}</span></div>
+      <div class="frac-cap">features where recent<br>narrows by &gt; ${T_IMP}<br>= frac_improved ${fmt(diag.frac_improved)}</div>
+    </div>
+    <div class="bplist">
+      ${pf.map((f) => barPair(f.feature, f.dist_full, f.dist_recent, maxV)).join("")}
+    </div>
+    <p class="emptynote" style="margin-top:12px">Blue = full-train vs val · grey/green = recent vs val.
+    Green only when recency actually shrinks the standardized distance.</p>
+    ${caption}`;
+}
+
+function renderOLS(sc, verdict, recentPeriods) {
+  const { maeExpanding, maeSliding } = olsHoldout(sc, recentPeriods);
+  const expWins = !(maeSliding < maeExpanding);
+  const lowerWindow = expWins ? "expanding" : "sliding";
+  const gateMatches = verdict.scheme === lowerWindow;
+  const chosen = verdict.scheme;
+  const mae = (name, val, isChosen) => `
+    <div class="mae ${(!expWins && name === "sliding") || (expWins && name === "expanding") ? "win" : ""}">
+      <div class="mh"><span>${name} window</span>${isChosen ? `<span class="chosen">◂ gate</span>` : ""}</div>
+      <div class="mv">${fmt(val, 3)}</div>
+      <div class="ms">holdout MAE on val target</div>
+    </div>`;
+  let verdictHtml;
+  if (gateMatches) {
+    verdictHtml = `<h4>The gate picked the window that generalizes.</h4>
+      <p>Gate chose <span class="ok">${chosen.toUpperCase()}</span>, and the
+      ${lowerWindow} window has the lower holdout MAE
+      (${fmt(expWins ? maeExpanding : maeSliding, 3)} vs ${fmt(expWins ? maeSliding : maeExpanding, 3)}).
+      The covariate-only heuristic — which never saw the target — landed on the window that actually predicts better.</p>`;
+  } else if (chosen === "expanding") {
+    verdictHtml = `<h4>A deliberate, conservative miss.</h4>
+      <p>Gate chose <span class="caution">${chosen.toUpperCase()}</span>, but the
+      ${lowerWindow} window is actually lower-MAE here
+      (${fmt(Math.min(maeExpanding, maeSliding), 3)} vs ${fmt(Math.max(maeExpanding, maeSliding), 3)}).
+      This is the breadth/period <b>brake</b> trading a little accuracy for protection against false positives —
+      exactly what the thin-evidence floor is for.</p>`;
+  } else {
+    verdictHtml = `<h4>Covariate drift isn't always concept drift.</h4>
+      <p>Gate read the covariates as recency-reducible and chose <span class="caution">${chosen.toUpperCase()}</span>,
+      yet the expanding window is lower-MAE here
+      (${fmt(Math.min(maeExpanding, maeSliding), 3)} vs ${fmt(Math.max(maeExpanding, maeSliding), 3)}).
+      The inputs shifted, but the target relation held — so the full window's extra data fits a slightly better
+      model. The gate decides on covariates alone and <b>never reads the target</b>; this is the honest residual
+      risk of acting on covariate movement, surfaced rather than hidden.</p>`;
+  }
+  document.getElementById("olsInner").innerHTML =
+    mae("expanding", maeExpanding, chosen === "expanding") +
+    mae("sliding", maeSliding, chosen === "sliding") +
+    `<div class="ols-verdict">${verdictHtml}</div>`;
+}
+
+// ── "Your data" mode ────────────────────────────────────────────────────────
+function showDataError(msg) {
+  const el = document.getElementById("dataErr");
+  el.innerHTML = `<b>✗</b> ${msg}`;
+  el.classList.add("show");
+}
+function clearDataError() {
+  const el = document.getElementById("dataErr");
+  el.classList.remove("show");
+  el.innerHTML = "";
+}
+
+// Parse one textarea into { header, rows }; update its status line; surface a
+// red banner naming the offending line on a parse error. Returns null on failure.
+function parseFrame(textId, statId) {
+  const stat = document.getElementById(statId);
+  const text = document.getElementById(textId).value;
+  if (!text.trim()) { stat.innerHTML = ""; return null; }
+  try {
+    const { header, rows } = parseCSV(text);
+    stat.innerHTML = `<span class="ok">✓ ${rows.length} rows · ${header.length} cols</span>`;
+    return { header, rows };
+  } catch (e) {
+    stat.innerHTML = `<span class="bad">✗ parse error</span>`;
+    showDataError(`Parse error on line <b>${e.line != null ? e.line : "?"}</b>: ${esc(e.message)}`);
+    return null;
+  }
+}
+
+function populateSelects() {
+  if (!state.dataTrain) return;
+  const cols = state.dataTrain.header;
+  const timeSel = document.getElementById("timeSel");
+  const targetSel = document.getElementById("targetSel");
+  const prevTime = timeSel.value;
+  const prevTarget = targetSel.value;
+  const opts = cols.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+  timeSel.innerHTML = opts;
+  targetSel.innerHTML = `<option value="">(none)</option>` + opts;
+  timeSel.value = cols.includes(prevTime) ? prevTime : guessTimeCol(state.dataTrain.rows);
+  targetSel.value = cols.includes(prevTarget) ? prevTarget : guessTargetCol(state.dataTrain.rows);
+}
+
+function parseInputs() {
+  clearDataError();
+  state.dataTrain = parseFrame("trainText", "trainStat");
+  state.dataVal = parseFrame("valText", "valStat");
+  populateSelects();
+}
+
+function renderDataPlaceholder() {
+  document.getElementById("naivePanel").innerHTML = `
+    <h3>Naive separability${info("naive")}</h3>
+    <div class="sub">adversarial AUC · the standard foil</div>
+    <p class="emptynote" style="margin-top:12px">Load or paste a train + validation CSV, pick the time column,
+    and hit <b>Run gate</b>. Both detectors read your parsed rows — the same <code>gate.js</code> every other
+    tab uses.</p>`;
+  document.getElementById("gatePanel").innerHTML = `
+    <h3>Recency-reducibility gate${info("verdict")}</h3>
+    <div class="sub">recency_cv · driftDiagnostic → decideScheme</div>
+    <p class="emptynote" style="margin-top:12px">Awaiting your data. The verdict here will be whatever
+    <code>driftDiagnostic</code> + <code>decideScheme</code> return on your rows — never hardcoded.</p>`;
+  document.getElementById("callout").classList.add("hidden");
+  document.getElementById("featurePanel").innerHTML =
+    `<p class="emptynote">Per-feature scan appears after you run the gate on your data.</p>`;
+  document.getElementById("olsInner").innerHTML =
+    `<div class="ols-verdict" style="grid-column:1/-1"><p class="emptynote" style="margin:0">OLS holdout
+     appears here when validation ground truth is available.</p></div>`;
+}
+
+function renderDataOLS(train, val, timeCol, targetCol, diag, verdict) {
+  const inner = document.getElementById("olsInner");
+  const valTarget = buildValTarget(val, state.dataValTruth, targetCol);
+  if (!targetCol || !train.length || !(targetCol in train[0]) || !valTarget) {
+    inner.innerHTML =
+      `<div class="ols-verdict" style="grid-column:1/-1"><p class="emptynote" style="margin:0">OLS holdout
+       needs validation ground truth — not provided.</p></div>`;
+    return;
+  }
+  // OLS regressors = the numeric covariates the gate scanned, minus the time
+  // index (extrapolating on an out-of-range monotone period would be meaningless).
+  const scanned = diag.ok ? diag.per_feature.map((f) => f.feature)
+                          : numericColsInBoth(train, val, [targetCol]);
+  const featureCols = scanned.filter((c) => c !== timeCol);
+  if (!featureCols.length) {
+    inner.innerHTML =
+      `<div class="ols-verdict" style="grid-column:1/-1"><p class="emptynote" style="margin:0">OLS holdout
+       skipped — no numeric covariate to fit on.</p></div>`;
+    return;
+  }
+  const scenarioLike = { trainRows: train, timeCol, featureCols, targetCol, valRows: val, valTarget };
+  renderOLS(scenarioLike, verdict, RECENT_PERIODS);
+}
+
+// Render an UNMISSABLE error into the results area (center gate panel) AND the
+// left banner, so a failure is never silent and never leaves the panel blank.
+function renderDataError(headline, detail) {
+  showDataError(detail ? `${esc(headline)}: ${esc(detail)}` : esc(headline));
+  document.getElementById("ranOk").classList.add("hidden");
+  document.getElementById("gatePanel").innerHTML = `
+    <h3>Recency-reducibility gate${info("verdict")}</h3>
+    <div class="sub">recency_cv · driftDiagnostic → decideScheme</div>
+    <div class="resulterr"><b>✗ ${esc(headline)}</b>${detail ? `<span>${esc(detail)}</span>` : ""}
+      <span class="hint">Fix the input on the left, then press Run gate again.</span></div>`;
+  document.getElementById("naivePanel").innerHTML = `
+    <h3>Naive separability${info("naive")}</h3>
+    <div class="sub">adversarial AUC · the standard foil</div>
+    <p class="emptynote" style="margin-top:12px">No run — see the error in the gate panel.</p>`;
+  document.getElementById("callout").classList.add("hidden");
+  document.getElementById("foilNote").classList.add("hidden");
+  document.getElementById("featurePanel").innerHTML =
+    `<p class="emptynote">No per-feature scan — the run did not complete.</p>`;
+  document.getElementById("olsInner").innerHTML =
+    `<div class="ols-verdict" style="grid-column:1/-1"><p class="emptynote" style="margin:0">No OLS holdout — the run did not complete.</p></div>`;
+}
+
+// The real compute path. Returns { okRun, info } where okRun=true means a verdict
+// rendered (INCLUDING the ok:false EXPANDING fallback — a valid outcome), and
+// okRun=false means a pre-flight check stopped with a specific inline error.
+// Throws are NOT caught here — the caller's try/catch turns them into a visible
+// error, so nothing can fail silently.
+//
+// The responsiveness cap (group-aware down-sampling of large uploads) lives in
+// sampling.js — ROW_CAP / SAMPLE_SEED / sampleGroups are imported above so the
+// exact sampling the demo ships is the sampling the BYO tests exercise.
+function runGateCompute() {
+  clearDataError();
+  const train = state.dataTrain && state.dataTrain.rows;
+  const val = state.dataVal && state.dataVal.rows;
+
+  // (3) Pre-flight: both frames parsed and non-empty.
+  if (!train || !train.length) {
+    renderDataError("No training data", "Load or paste a training CSV (with a target), then press Run gate.");
+    return { okRun: false };
+  }
+  if (!val || !val.length) {
+    renderDataError("No validation data", "Load or paste a validation/test CSV, then press Run gate.");
+    return { okRun: false };
+  }
+
+  // (3) Pre-flight: a time column selected, present, and numeric.
+  const timeCol = document.getElementById("timeSel").value;
+  const targetCol = document.getElementById("targetSel").value; // "" = none
+  if (!timeCol) {
+    renderDataError("Pick a time column", "Choose the period/time column the gate should rank rows by.");
+    return { okRun: false };
+  }
+  if (!(timeCol in train[0])) {
+    renderDataError("Time column not found", `'${timeCol}' isn't a column in the training data.`);
+    return { okRun: false };
+  }
+  if (!isNumericCol(train, timeCol)) {
+    renderDataError("Time column isn't numeric", `'${timeCol}' contains non-numeric values, so the gate can't derive a period rank. Pick an integer period/time column.`);
+    return { okRun: false };
+  }
+
+  // (3) Pre-flight: at least one shared numeric feature after excluding the target.
+  const sharedExcl = [targetCol, timeCol].filter(Boolean);
+  const shared = numericColsInBoth(train, val, [targetCol].filter(Boolean));
+  if (!shared.length) {
+    renderDataError("No shared numeric features",
+      "Train and validation share no numeric covariate (after excluding the target). The gate needs ≥1 numeric column present in both frames.");
+    return { okRun: false };
+  }
+
+  // Responsiveness cap: sample whole GROUPS of train down to ROW_CAP, then keep
+  // val on the SAME groups (consistency), before any heavy work. The gate runs on
+  // the sample; the cue discloses exactly what subset it ran on.
+  const trS = sampleGroups(train, timeCol, targetCol, ROW_CAP, SAMPLE_SEED, null);
+  const vaS = sampleGroups(val, timeCol, targetCol, ROW_CAP, SAMPLE_SEED,
+    trS.mode === "group" ? trS.chosen : null);
+  const trainR = trS.rows;
+  const valR = vaS.rows;
+
+  // The REAL gate — target column excluded so a target present in val is never read.
+  const exclude = new Set(targetCol ? [targetCol] : []);
+  const diag = driftDiagnostic(trainR, valR, timeCol, { exclude });
+  // (4) ok:false (e.g. <14 periods) is a VALID outcome: decideScheme returns the
+  // EXPANDING fallback with a verbatim reason. paintDetectors renders that as a
+  // result (not an error, not blank).
+  const verdict = decideScheme(diag);
+  const naive = naiveFoil(trainR, valR, numericColsInBoth(trainR, valR, sharedExcl));
+  const anim = verdict.scheme !== lastScheme;
+  lastScheme = verdict.scheme;
+
+  paintDetectors(diag, verdict, naive, anim);
+  renderFeatures(diag, timeCol);
+  renderDataOLS(trainR, valR, timeCol, targetCol, diag, verdict);
+  return {
+    okRun: true, diag, verdict,
+    n: { train: trainR.length, val: valR.length },
+    sample: { train: trS, val: vaS, cols: Object.keys(train[0]).length },
+  };
+}
+
+// (5) Brief, unmistakable "done" cue above the detectors. When a frame was
+// sampled, the cue HONESTLY states it ran on a subset and shows both counts —
+// it ran and produced a real verdict; this is not a failure/limit message.
+function flashRanOk(res) {
+  const el = document.getElementById("ranOk");
+  const grp = (n) => n.toLocaleString("en-US");
+  const fb = res.diag && !res.diag.ok ? " (expanding fallback)" : "";
+  const scheme = `<b style="color:var(--cream)">${res.verdict.scheme.toUpperCase()}</b>`;
+  const s = res.sample, t = s && s.train;
+  if (t && t.sampled && t.mode === "group") {
+    // "Sampled 333 of 900 groups (49,950 of 135,000 train rows) · 19 cols — SLIDING"
+    el.innerHTML = `Sampled ${grp(t.groupsUsed)} of ${grp(t.groupsFull)} groups `
+      + `(${grp(t.used)} of ${grp(t.full)} train rows) · ${s.cols} cols — ${scheme}${fb}.`
+      + info("sampled");
+  } else if (t && t.sampled && t.mode === "recent") {
+    // "Sampled the most recent 50,000 of 135,000 rows · 7 cols — SLIDING"
+    el.innerHTML = `Sampled the most recent ${grp(t.used)} of ${grp(t.full)} rows `
+      + `· ${s.cols} cols — ${scheme}${fb}.` + info("sampled");
+  } else {
+    el.innerHTML = `✓ Gate ran on ${res.n.train} train · ${res.n.val} val rows — ${scheme}${fb}.`;
+  }
+  el.classList.remove("hidden");
+}
+
+// (1) Busy state: disable + spinner BEFORE async work; reset in finally.
+function setBtnBusy(btn, busy, doneLabel) {
+  if (busy) {
+    btn.dataset.label = btn.dataset.label || btn.innerHTML;
+    btn.disabled = true;
+    btn.classList.add("busy");
+    btn.classList.remove("done");
+    btn.innerHTML = `<span class="spin"></span>Running…`;
+  } else {
+    btn.disabled = false;
+    btn.classList.remove("busy");
+    if (doneLabel) {
+      btn.classList.add("done");
+      btn.innerHTML = "✓ Gate ran";
+      setTimeout(() => { btn.classList.remove("done"); btn.innerHTML = btn.dataset.label || "▶ Run gate"; }, 1400);
+    } else {
+      btn.innerHTML = btn.dataset.label || "▶ Run gate";
+    }
+  }
+}
+
+// next paint — lets the "Running…" state actually render before sync compute.
+const nextFrame = () =>
+  new Promise((r) => (window.requestAnimationFrame
+    ? requestAnimationFrame(() => requestAnimationFrame(r))
+    : setTimeout(r, 0)));
+
+// (1)(2) Click handler: always show the click registered, wrap EVERYTHING in
+// try/catch so any throw becomes a visible inline error, reset in finally.
+async function onRunGate() {
+  const btn = document.getElementById("runGate");
+  setBtnBusy(btn, true);
+  let okRun = false;
+  try {
+    await nextFrame();                 // paint "Running…" before compute blocks
+    const res = runGateCompute();
+    okRun = res.okRun;
+    if (okRun) flashRanOk(res);        // (5) success cue
+  } catch (e) {
+    // (2) Nothing fails silently — name what broke in the results area.
+    renderDataError("Run failed", (e && e.message) ? e.message : String(e));
+    okRun = false;
+  } finally {
+    setBtnBusy(btn, false, okRun);     // (1) reset on success AND failure
+    // The run rebuilt the result panels — drop/realign any open tooltip whose ⓘ
+    // was just replaced (this path doesn't go through render()).
+    if (tooltips) tooltips.refresh();
+  }
+}
+
+async function loadExample() {
+  const btn = document.getElementById("loadExample");
+  const orig = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = `<span class="spin"></span>Loading…`;
+  clearDataError();
+  try {
+    const get = (f) => fetch("./examples/" + f).then((r) => {
+      if (!r.ok) throw new Error(`${f}: HTTP ${r.status}`);
+      return r.text();
+    });
+    const [tr, va, vt] = await Promise.all([
+      get("example_train.csv"), get("example_val.csv"), get("example_val_truth.csv"),
+    ]);
+    document.getElementById("trainText").value = tr;
+    document.getElementById("valText").value = va;
+    parseInputs();
+    state.dataValTruth = parseCSV(vt).rows; // truth join for the OLS strip
+  } catch (e) {
+    renderDataError("Couldn't load bundled example",
+      `${(e && e.message) ? e.message : String(e)}. On GitHub Pages the CSVs live in demo/examples/.`);
+    btn.disabled = false; btn.innerHTML = orig;
+    return;
+  }
+  btn.disabled = false; btn.innerHTML = orig;
+  await onRunGate(); // run with the same busy + error handling as a manual click
+}
+
+function renderData() {
+  if (state.dataTrain && state.dataTrain.rows && state.dataTrain.rows.length &&
+      state.dataVal && state.dataVal.rows && state.dataVal.rows.length) {
+    // Re-running on tab switch: keep it safe so a throw never blanks the panel.
+    try {
+      const res = runGateCompute();
+      if (res.okRun) flashRanOk(res);
+    } catch (e) {
+      renderDataError("Run failed", (e && e.message) ? e.message : String(e));
+    }
+  } else {
+    document.getElementById("ranOk").classList.add("hidden");
+    renderDataPlaceholder();
+  }
+}
+
+function render() {
+  if (state.tab === "data") renderData();
+  else renderScenario();
+  // A render may have detached the active tooltip's ⓘ or reflowed the layout —
+  // reposition it, or drop it if its trigger is gone.
+  if (tooltips) tooltips.refresh();
+}
+
+// ── build controls ──────────────────────────────────────────────────────────
+// Preset bookmarks. Each button has THREE visual states: "exact" (filled —
+// current params match this preset), "modified" (outlined + dot — this is the
+// preset we jumped from, now edited), or inactive.
+function buildScenButtons() {
+  document.getElementById("scenGrid").innerHTML = SCENARIO_PRESET_ORDER.map((key) => {
+    const m = SCENARIO_PRESET_INFO[key];
+    return `<div class="sbtn ${m.foil ? "foil" : ""}" data-scen="${key}">${m.label}<small>${m.sub}</small></div>`;
+  }).join("");
+  document.querySelectorAll("[data-scen]").forEach((b) =>
+    b.addEventListener("click", () => applyPreset(b.dataset.scen))
+  );
+  refreshPresetStates();
+}
+
+// Land on a preset: copy its config into state, sync every control, render.
+function applyPreset(name) {
+  const cfg = SCENARIO_PRESETS[name];
+  if (!cfg) return;
+  for (const k of PRESET_KEYS) state[k] = cfg[k];
+  state.activePreset = name;
+  syncControlsFromState();
+  render();
+}
+
+// Reflect the current params onto the preset buttons + breadcrumb. If the params
+// happen to land exactly on a (possibly different) preset, adopt it as active so
+// it shows filled and the breadcrumb clears.
+function refreshPresetStates() {
+  const exact = SCENARIO_PRESET_ORDER.find((n) => presetMatches(currentParams(), n));
+  if (exact) state.activePreset = exact;
+
+  document.querySelectorAll("[data-scen]").forEach((b) => {
+    const name = b.dataset.scen;
+    const isExact = presetMatches(currentParams(), name);
+    const isModified = !isExact && name === state.activePreset && !exact;
+    b.classList.toggle("exact", isExact);
+    b.classList.toggle("modified", isModified);
+  });
+
+  const crumb = document.getElementById("breadcrumb");
+  if (!exact && state.activePreset) {
+    crumb.style.display = "";
+    crumb.innerHTML =
+      `Jumped from: <b>${esc(SCENARIO_PRESET_INFO[state.activePreset].label)}</b>`
+      + `<button type="button" id="crumbReset">reset</button>`;
+    document.getElementById("crumbReset").addEventListener("click", () => applyPreset(state.activePreset));
+  } else {
+    crumb.style.display = "none";
+    crumb.innerHTML = "";
+  }
+}
+
+// Push current state values onto every toggle + slider (used after applyPreset).
+function syncControlsFromState() {
+  document.querySelectorAll("#shapeToggle button").forEach((b) =>
+    b.classList.toggle("seg-on", b.dataset.shape === state.shape));
+  document.querySelectorAll("#targetToggle button").forEach((b) =>
+    b.classList.toggle("seg-on", b.dataset.target === state.target));
+  const set = (id, val, vId, txt) => {
+    document.getElementById(id).value = val;
+    if (vId) document.getElementById(vId).textContent = txt;
+  };
+  set("pSlide", state.changepoint, "pVal", state.changepoint.toFixed(2));
+  set("magSlide", state.magnitude, "magVal", state.magnitude.toFixed(1));
+  set("rpSlide", state.recentWindow, "rpVal", String(state.recentWindow));
+  set("nfSlide", state.nFeatures, "nfVal", String(state.nFeatures));
+  set("npSlide", state.nPeriods, "npVal", String(state.nPeriods));
+}
+
+// A slider edit updates one continuous param, refreshes its live readout, and
+// re-runs the gate. It never touches activePreset — refreshPresetStates() (called
+// from renderScenario) decides whether we're still "exact" on a preset or have
+// drifted off into "modified" + breadcrumb territory.
+function bindSlider(id, valId, key, parse, fmtFn) {
+  const s = document.getElementById(id);
+  s.addEventListener("input", () => {
+    state[key] = parse(s.value);
+    document.getElementById(valId).textContent = fmtFn ? fmtFn(state[key]) : state[key];
+    render();
+  });
+}
+
+// A structural toggle flips a discrete param and re-runs the gate.
+function bindToggle(containerId, attr, key) {
+  document.querySelectorAll(`#${containerId} button`).forEach((b) =>
+    b.addEventListener("click", () => {
+      state[key] = b.dataset[attr];
+      document.querySelectorAll(`#${containerId} button`).forEach((x) =>
+        x.classList.toggle("seg-on", x === b));
+      render();
+    })
+  );
+}
+
+function init() {
+  hydrateInfo();          // turn every <span data-info> placeholder into a real ⓘ
+  tooltips = initTooltips(document, window); // FLIP+CLAMP positioning in a body escape layer
+  buildScenButtons();
+
+  // tabs
+  document.getElementById("tabScenario").addEventListener("click", () => switchTab("scenario"));
+  document.getElementById("tabData").addEventListener("click", () => switchTab("data"));
+
+  // "Your data" tab wiring
+  wireDataInputs();
+
+  // structural toggles
+  bindToggle("shapeToggle", "shape", "shape");
+  bindToggle("targetToggle", "target", "target");
+
+  // continuous sliders
+  bindSlider("pSlide", "pVal", "changepoint", parseFloat, (v) => v.toFixed(2));
+  bindSlider("magSlide", "magVal", "magnitude", parseFloat, (v) => v.toFixed(1));
+  bindSlider("rpSlide", "rpVal", "recentWindow", (v) => parseInt(v, 10));
+  bindSlider("nfSlide", "nfVal", "nFeatures", (v) => parseInt(v, 10));
+  bindSlider("npSlide", "npVal", "nPeriods", (v) => parseInt(v, 10));
+
+  document.getElementById("reseedBtn").addEventListener("click", () => {
+    state.seed = (state.seed % 9999) + 1;
+    document.getElementById("seedTag").textContent = "seed " + state.seed;
+    render();
+  });
+
+  syncControlsFromState();  // start on the recentRegimeShift preset's config
+  render();
+}
+
+function wireDataInputs() {
+  const wireFile = (fileId, textId) => {
+    document.getElementById(fileId).addEventListener("change", (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        document.getElementById(textId).value = reader.result;
+        state.dataValTruth = null; // a fresh upload invalidates the example truth
+        parseInputs();
+      };
+      reader.onerror = () => showDataError(`Could not read file <b>${esc(f.name)}</b>.`);
+      reader.readAsText(f);
+    });
+  };
+  wireFile("trainFile", "trainText");
+  wireFile("valFile", "valText");
+
+  for (const id of ["trainText", "valText"]) {
+    document.getElementById(id).addEventListener("input", () => {
+      state.dataValTruth = null; // manual edits drop the bundled-example truth join
+      parseInputs();
+    });
+  }
+
+  document.getElementById("loadExample").addEventListener("click", loadExample);
+  document.getElementById("runGate").addEventListener("click", onRunGate);
+}
+
+function switchTab(tab) {
+  state.tab = tab;
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  for (const t of ["scenario", "data"]) {
+    document.getElementById("tab" + cap(t)).classList.toggle("active", t === tab);
+    document.getElementById("panel" + cap(t)).style.display = t === tab ? "" : "none";
+  }
+  // The descriptor + foil note belong to the Scenarios tab only.
+  document.getElementById("descriptor").style.display = tab === "scenario" ? "" : "none";
+  if (tab !== "scenario") document.getElementById("foilNote").classList.add("hidden");
+  // The "Your data" success cue belongs to that tab only.
+  if (tab !== "data") document.getElementById("ranOk").classList.add("hidden");
+  lastScheme = null;
+  render();
+}
+
+init();
+</script>
+</body>
+</html>

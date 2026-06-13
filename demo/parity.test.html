@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>recency_cv — JS parity test</title>
+  <style>
+    body { font: 14px/1.5 ui-monospace, "Cascadia Code", Consolas, monospace; margin: 2rem; color: #1a1a1a; }
+    h1 { font-size: 1.3rem; }
+    #banner { font-size: 1.2rem; font-weight: 700; padding: .6rem 1rem; border-radius: 6px; margin: 1rem 0; }
+    .ok { background: #e3f9e5; color: #0b6b2f; }
+    .fail { background: #fde8e8; color: #9b1c1c; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+    th, td { border: 1px solid #ddd; padding: .35rem .55rem; text-align: left; vertical-align: top; }
+    th { background: #f3f4f6; position: sticky; top: 0; }
+    td.status-pass { color: #0b6b2f; font-weight: 700; }
+    td.status-fail { color: #9b1c1c; font-weight: 700; }
+    tr.row-fail { background: #fff5f5; }
+    td.val { max-width: 48ch; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .muted { color: #777; }
+  </style>
+</head>
+<body>
+  <h1>recency_cv — JavaScript ↔ Python parity</h1>
+  <p class="muted">Loads <code>../parity/fixture_inputs.json</code>, recomputes every value with
+  <code>gate.js</code>, and asserts a match against <code>../parity/expected.json</code> within 1e-9
+  (nan == nan passes).</p>
+  <div id="banner">running…</div>
+  <table id="results">
+    <thead><tr><th>#</th><th>path</th><th>status</th><th>expected</th><th>actual</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <script type="module">
+    import {
+      standardizedMeanShift,
+      driftDiagnostic,
+      decideScheme,
+      DRIFT_IMPROVE_PER_FEATURE_THRESHOLD,
+    } from "./gate.js";
+
+    const TOL = 1e-9;
+    const rows = [];
+
+    function pushRow(path, expected, actual, ok) {
+      rows.push({ path, expected, actual, ok });
+    }
+
+    function show(v) {
+      if (typeof v === "number" && Number.isNaN(v)) return "NaN";
+      if (typeof v === "string") return JSON.stringify(v);
+      return String(v);
+    }
+
+    // Walk the EXPECTED structure; pull the matching value out of ACTUAL by path.
+    function compare(path, expected, actual) {
+      if (Array.isArray(expected)) {
+        for (let i = 0; i < expected.length; i++) {
+          compare(`${path}[${i}]`, expected[i], actual?.[i]);
+        }
+        return;
+      }
+      if (expected !== null && typeof expected === "object") {
+        for (const k of Object.keys(expected)) {
+          compare(path ? `${path}.${k}` : k, expected[k], actual?.[k]);
+        }
+        return;
+      }
+      // leaf
+      let ok;
+      if (expected === "NaN") {
+        ok = typeof actual === "number" && Number.isNaN(actual);
+      } else if (typeof expected === "number") {
+        ok = typeof actual === "number" && !Number.isNaN(actual) && Math.abs(expected - actual) <= TOL;
+      } else if (typeof expected === "boolean") {
+        ok = actual === expected;
+      } else {
+        ok = actual === expected; // string
+      }
+      pushRow(path, expected, actual, ok);
+    }
+
+    async function main() {
+      const banner = document.getElementById("banner");
+      let inputs, expected;
+      try {
+        [inputs, expected] = await Promise.all([
+          fetch("../parity/fixture_inputs.json").then((r) => r.json()),
+          fetch("../parity/expected.json").then((r) => r.json()),
+        ]);
+      } catch (err) {
+        banner.className = "fail";
+        banner.textContent =
+          "Could not load fixtures (serve over http, e.g. `python -m http.server` from the repo root): " + err;
+        return;
+      }
+
+      // Recompute the full public surface in JS.
+      const panel = inputs.drift_diagnostic;
+      const actual = {
+        standardized_mean_shift: inputs.standardized_mean_shift.map((c) => ({
+          name: c.name,
+          result: standardizedMeanShift(c.a, c.b),
+        })),
+        drift_diagnostic: driftDiagnostic(panel.train, panel.val, panel.time_col),
+        decide_scheme: inputs.decide_scheme.map((c) => ({
+          name: c.name,
+          result: decideScheme(c.diagnostic),
+        })),
+      };
+
+      compare("", expected, actual);
+
+      // Standalone boundary assertion: strict `> 0.05`. For [0.04, 0.05, 0.06]
+      // the counted fraction is exactly 1/3 — 0.05 must NOT count.
+      const improvements = [0.04, 0.05, 0.06];
+      const counted = improvements.filter((x) => x > DRIFT_IMPROVE_PER_FEATURE_THRESHOLD);
+      const frac = counted.length / improvements.length;
+      const boundaryOk =
+        Math.abs(frac - 1 / 3) <= TOL &&
+        !(0.05 > DRIFT_IMPROVE_PER_FEATURE_THRESHOLD) &&
+        counted.length === 1;
+      pushRow("boundary: strict>0.05 on [0.04,0.05,0.06] -> 1/3", 1 / 3, frac, boundaryOk);
+
+      // Render.
+      const tbody = document.querySelector("#results tbody");
+      let passed = 0;
+      rows.forEach((r, i) => {
+        if (r.ok) passed++;
+        const tr = document.createElement("tr");
+        if (!r.ok) tr.className = "row-fail";
+        tr.innerHTML =
+          `<td>${i + 1}</td>` +
+          `<td class="val">${r.path || "(root)"}</td>` +
+          `<td class="${r.ok ? "status-pass" : "status-fail"}">${r.ok ? "PASS" : "FAIL"}</td>` +
+          `<td class="val">${show(r.expected)}</td>` +
+          `<td class="val">${show(r.actual)}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      const all = passed === rows.length;
+      banner.className = all ? "ok" : "fail";
+      banner.textContent = `${all ? "ALL PASS" : "FAILURES"} — ${passed}/${rows.length} assertions matched within ${TOL}`;
+    }
+
+    main();
+  </script>
+</body>
+</html>

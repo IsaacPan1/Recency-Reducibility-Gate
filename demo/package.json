@@ -1,0 +1,6 @@
+{
+  "name": "recency-cv-demo",
+  "private": true,
+  "type": "module",
+  "description": "ES-module demo (gate.js port + BYO tab). type:module lets the dependency-free modules be imported headlessly under Node for the parity/BYO tests."
+}
